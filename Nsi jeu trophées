@@ -1,0 +1,1235 @@
+import pygame
+
+def jeufinal():
+    score1,continu=ramasserplagemer(True)
+    if continu:
+        score2, continu = panneaux(True)
+        if continu:
+            a, continu,score3 = jeumaison(1,True)
+            if continu:
+                score4, continu = ramasserplagemarche(True)
+                if continu:
+                    return score1+score2+int(score3/200)+score4,True
+    return 0,False
+
+def tridechets():
+    import pygame
+    import random, time
+    global decani, tapis, decaniaccele, gauche, score
+
+    #
+    # Partie fonction actualisation de l'ecran
+    #
+
+    def refresh(x, y):
+        """Fonction qui fait apparaitre le jeu des panneaux solaire et le fait fonctionner en partie"""
+        global decani, tapis, decaniaccele, gauche, score
+        #
+        # Partie animation principale
+        #
+        # decompte pour l'animation
+        if decani <= 0:
+            decani = 17
+            for i in range(len(mat)):
+                if mat[i][-2] <= 11:
+                    if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                        mat[i][-1] = mat[i][-1].move([10, 0])
+                        mat[i][-2] += 1
+            # Cette partie fait bouger chaque materiaux des tapis de gauche pouvant bouger
+            for i in range(len(mat2)):
+                mat2[i][-1] = mat2[i][-1].move([10, 0])
+                mat2[i][-2] += 1
+            # Cette partie fait bouger chaque materiaux des tapis de droite
+            for i in mat2:
+                if i[-2] > 15:
+                    if i[0] == i[1]:
+                        score[1] += 1
+                    mat2.remove(i)
+                    if score[1] >= 10:
+                        score[1] -= 10
+                        score[0] += 1
+            # Ici cette partie permet d'augmenter le score quand un materiau a bien été placé
+            for i in range(len(ani)):
+                ani[i] += 1
+                if ani[i] >= 3:
+                    ani[i] = 0
+                    # on anime les tapis roulants et fait bouger les materiaux le long de celui ci
+        # ani est un nombre pour savoir quelle image mettre pour animer les objets, decani le decompte avant le changement d 'animation
+
+        #
+        # Partie animation d'acceleration secondaire
+        #
+
+        if keys[pygame.K_SPACE]:
+            decaniaccele -= 1
+        if decaniaccele <= 0:
+            decaniaccele = 8
+            ani[tapis] += 1
+            for i in range(len(mat)):
+                if mat[i][0] == tapis:
+                    if mat[i][-2] <= 11:
+                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                            mat[i][-1] = mat[i][-1].move([10, 0])
+                            mat[i][-2] += 1
+            for i in range(len(mat2)):
+                if mat2[i][0] == tapis:
+                    if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
+                        mat2[i][-1] = mat2[i][-1].move([10, 0])
+                        mat2[i][-2] += 1
+            if random.randint(0, 26) == 25:
+                if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                    mat.append([tapis, random.randint(0, 2), 0])
+                    mat[-1].append(
+                        imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
+                    if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                        del mat[-1]
+                # on crée des materiaux suplementaire aleatoirement quand on accelere le tapis
+            if ani[tapis] >= 3:
+                ani[tapis] = 0
+        # ici c'est un moyen d'acceler le tapis roulant en étant devant et appuyant sur espace ce qui fait apparaitre plus de materiaux
+
+        #
+        # Partie remise à zero
+        #
+
+        yconv = [(i) * 100 + 50 for i in range(5)]
+        indiccouleur = [(150, 150, 150), (255, 255, 150), (255, 100, 100)]
+        # je refresh mon ecran pour pas que les anciennes images restent
+        ecran.fill((200, 200, 200))
+
+        #
+        #  Partie affichage des images
+        #
+
+        for i in range(3):
+            pygame.draw.rect(ecran, indiccouleur[i], (450 - 12, yconv[i] - 12 + 100, 74, 74))
+            # on place les indication de couleur pour savoir ou deposer les materiaux
+        for i in range(3):
+            ecran.blit(convs[ani[i]], convsrectg[i])
+            # on place les convoyeurs de gauches
+        for i in range(3):
+            ecran.blit(convs[ani[i] + 3], convsrectd[i])
+            # on place les convoyeurs de droite.
+        for i in mat:
+            ecran.blit(imagemats[i[1]], i[-1])
+        for i in mat2:
+            ecran.blit(imagemats[i[1]], i[-1])
+        for i in range(2):
+            ecran.blit(imagenombres[score[i]], imagenombres[score[i]].get_rect().move([250 + i * 50, -5]))
+        # on place les materiaux
+        # je met le carre de mon personage
+        pygame.draw.rect(ecran, (0, 255, 0), (x, y, 50, 50))
+
+        #
+        # Partie ecran de pause
+        #
+        if pausvalue[1]:
+            ecran.fill((200, 200, 200))
+            for i in range(3):
+                ecran.blit(spritesbutton[i], spriterectbuttons[i])
+        if not pausvalue[2]:
+            ecran.fill((255, 255, 255))
+            ecran.blit(commandscreen, commandscreen.get_rect())
+        # j update mon ecran
+        pygame.display.update()
+        # j update mon ecran
+        pygame.display.update()
+
+    #
+    # Partie fonction de verification
+    #
+
+    def verif(dist, ligne, liste, tpp):
+        for i in tpp:
+            if i[0] == ligne:
+                if dist > (i[-2] - 3) and dist < i[-2] and not i == liste:
+                    return False
+        return True
+
+    #
+    # Partie initialisation des variables
+    #
+    score = [0, 0]
+    ani = [0, 0, 0, 0, 0]
+    pausvalue = [True, True, True]
+    ecran = pygame.display.set_mode((600, 600))
+    decani = 10
+    commandscreen = pygame.image.load("eecrancommandpanneau.png")
+    decaniaccele = 8
+    spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
+                     pygame.image.load("commandbutton.png")]
+    spriterect = [i.get_rect() for i in spritesbutton]
+    spriterectbuttons = [spriterect[i].move(((ecran.get_width() - spriterect[i].width) / 2 - 200 + 200 * i,
+                                             (ecran.get_height() - spriterect[i].height) / 2)) for i in range(3)]
+    nommat = ("plastique.png", "papier.png", "metal.png")
+    imagemats = [pygame.image.load(i) for i in nommat]
+    nomconvs = ("conv1.png", "conv2.png", "conv3.png", "conv4.png", "conv5.png", "conv6.png")
+    convs = [pygame.image.load(i) for i in nomconvs]
+    nomnombres = ("0.png", "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png",)
+    imagenombres = [pygame.image.load(i) for i in nomnombres]
+    convsrectg = [convs[0].get_rect().move([0, 150 + i * 100]) for i in range(3)]
+    convsrectd = [convs[0].get_rect().move([450, 150 + i * 100]) for i in range(3)]
+    # ici j importe les images des convoyeurs et des materiaux pour les afficher plus tard et leur positions
+    pygame.display.set_caption("Tri selectif")
+    # je met le nom
+    ecran.fill((200, 200, 200))
+    # je met la couleur de base de l ecran
+    run = True
+    gauche = 150
+    droite = 400
+    tapis = 0
+    keys = pygame.key.get_pressed()
+    x = gauche
+    mat = []
+    f = 0
+    dec = 0
+    y = tapis * 100 + 150
+    main = 0
+    mat2 = []
+    # j'initie toutes mes variables
+
+    #
+    # Grande Partie boucle
+    #
+    timef=0
+    timed = time.process_time()
+    while run:
+        if timef >= 130:
+            run = False
+        refresh(x, y)
+        #
+        # partie menu pause
+        #
+        if pausvalue[1]:
+            for e in range(len(pausvalue)):
+                if pygame.mouse.get_pressed()[0] and spriterectbuttons[e].collidepoint(pygame.mouse.get_pos()):
+                    pausvalue[e] = False
+                    run = pausvalue[0]
+        elif pausvalue[2]:
+            #
+            # Partie ajout des materiaux naturellement generés
+            #
+            f -= 1
+            dec -= 1
+            decani -= 1
+            timef += time.process_time() - timed
+        timed=time.process_time()
+        # decompte du nommbre de frames avant de pouvoir rebouger de haut en bas et celui pour faire apparaitre des materiaux
+        pygame.time.delay(10)
+        if dec <= 0:
+            dec = 150
+            mat.append([random.randint(0, 2), random.randint(0, 2), 0])
+            mat[-1].append(imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 155]).move([0, mat[-1][0]]))
+            if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                del mat[-1]
+            # rajoute un materiau a la liste des materiaux
+
+        #
+        # Partie test des touches préssées
+        #
+
+        keys = pygame.key.get_pressed()
+        # recuperation des touches pressées
+        if keys[pygame.K_ESCAPE]:
+            #
+            # variable pour le menu de pause
+            #
+            pausvalue[1] = True
+            pausvalue[2] = True
+            pygame.time.delay(100)
+        for event in pygame.event.get():
+            # si on tente de quitter le jeu s'arette
+            if event.type == pygame.QUIT:
+                run = False
+        if keys[pygame.K_LEFT]:
+            # appuyer sur la fleche gauche nous met vers les tapis de gauche
+            if x != gauche:
+                if main != 0:
+                    main[-1] = main[-1].move([(gauche - droite), 0])
+            x = gauche
+        if keys[pygame.K_RIGHT]:
+            # appuyer sur la fleche de droite nous met vers les tapis roulant de droite
+            if x != droite:
+                if main != 0:
+                    main[-1] = main[-1].move([(droite - gauche), 0])
+            x = droite
+        if keys[pygame.K_UP]:
+            # appuyer sur haut nous remonte d'un tapis roulant
+            if f < 0:
+                if tapis > 0:
+                    tapis -= 1
+                    f = 15
+                    if main != 0:
+                        main[-1] = main[-1].move([0, -100])
+                    # f est un cooldown sinon on monte de plusieurs tapis instantanément
+            y = tapis * 100 + 150
+        if keys[pygame.K_DOWN]:
+            # à l'inverse en appuyant sur la fleche du bas on descend d'un tapis
+            if f < 0:
+                if tapis < 2:
+                    tapis += 1
+                    f = 15
+                    if main != 0:
+                        main[-1] = main[-1].move([0, 100])
+            y = tapis * 100 + 150
+        if keys[pygame.K_n]:
+            if x == gauche:
+                if main == 0:
+                    for i in mat:
+                        if i[0] == tapis:
+                            if i[-2] >= 11:
+                                main = i
+                                mat.remove(main)
+            if x == droite:
+                if main != 0:
+                    main[-1] = main[-1].move([85, 0])
+                    main[-2] = 0
+                    main[0] = tapis
+                    mat2.append(main)
+                    if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
+                        del mat2[-1]
+                    else:
+                        main = 0
+        # la fonction pour refresh l'ecran
+    scoref = score[0] * 10 + score[1]
+    return scoref, timef >= 130
+
+
+def ramasserplagemarche(final=False):
+    import pygame
+    import random
+    import time
+
+    global npoub, commandscreen
+
+    #
+    # Partie fonction actualisation de l'ecran
+    #
+
+    def refresh(x, y):
+        """Fonction qui fait apparaitre le jeu des dechets à la plage"""
+        global npoub, commandscreen
+        #
+        # Partie animation principale
+        #
+        # decompte pour l'animation
+
+        #
+        # Partie remise à zero
+        #
+
+        yconv = [(i) * 100 + 50 for i in range(5)]
+        indiccouleur = [(255, 255, 0), (100, 100, 255), (255, 255, 255), (50, 50, 50), (255, 0, 0)]
+        # je refresh mon ecran pour pas que les anciennes images restent
+        ecran.fill((255, 255, 0))
+
+        #
+        #  Partie affichage des images
+        #
+
+        # je met le carre de mon personage
+        for i in range(2):
+            ecran.blit(sable[i], sablerect[i])
+        pygame.draw.rect(ecran, (0, 255, 0), (x, y, 50, 50))
+        for i in range(len(dechets)):
+            ecran.blit(imagedechets[dechets[i][1]], dechets[i][0])
+        for i in range(2):
+            ecran.blit(imagenombres[score[i]], imagenombres[score[i]].get_rect().move([250 + i * 50, -5]))
+        # on place les dechets
+        ecran.blit(pygame.transform.scale(imagedechets[npoub], [70, 70]),
+                   pygame.Rect(0, ecran.get_width() - 70, 70, 70))
+        # on place l'indicateur de la poubelle que l'on a prise
+
+        #
+        # Partie ecran de pause
+        #
+        if pausvalue[1]:
+            ecran.fill((200, 200, 200))
+            for i in range(3):
+                ecran.blit(spritesbutton[i], spriterectbuttons[i])
+        #
+        # partie ecran des commandes
+        #
+        if not pausvalue[2]:
+            ecran.fill((255, 255, 255))
+            ecran.blit(commandscreen, commandscreen.get_rect())
+        # j update mon ecran
+        pygame.display.update()
+
+    #
+    # Partie initialisation des variables
+    #
+    score = [0, 0]
+    pausvalue = [True, True, True]
+    ecran = pygame.display.set_mode((600, 600))
+    decani = 10
+    decaniaccele = 8
+    spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
+                     pygame.image.load("commandbutton.png")]
+    spriterect = [i.get_rect() for i in spritesbutton]
+    spriterectbuttons = [spriterect[i].move(((ecran.get_width() - spriterect[i].width) / 2 - 200 + 200 * i,
+                                             (ecran.get_height() - spriterect[i].height) / 2)) for i in range(3)]
+    nomdechets = ("plastique.png", "metal.png", "papier.png", "organique.png")
+    imagedechets = [pygame.image.load(i) for i in nomdechets]
+    nomnombres = ("0.png", "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png",)
+    imagenombres = [pygame.image.load(i) for i in nomnombres]
+    commandscreen = pygame.image.load("ecrancommandmer.png")
+    sable = [pygame.image.load("sable" + str(i) + ".png") for i in range(2)]
+    sablerect = [sable[i].get_rect().move(0, i * 600) for i in range(2)]
+    # ici j importe les images des convoyeurs et des materiaux pour les afficher plus tard et leur positions
+    pygame.display.set_caption("nettoyage de plage")
+    # je met le nom
+    ecran.fill((200, 200, 200))
+    # je met la couleur de base de l ecran
+    run = True
+    tapis = 0
+    x = 250
+    dechets = []
+    npoub = 0
+    poubelles = [[], [], []]
+    f = 0
+    dec = 0
+    y = 250
+    main = 0
+    mat2 = []
+    decpaus = 0
+    decmove = 1
+    timef = 0
+    timen=100
+    if final:
+        timen=40
+    # j'initie toutes mes variables
+
+    #
+    # Grande Partie boucle
+    #
+    timed = time.process_time()
+    while run:
+        if timef >= timen:
+            run = False
+        perso = pygame.Rect(x, y, 50, 50)
+        refresh(x, y)
+        #
+        # partie menu pause
+        #
+        if pausvalue[1]:
+            for e in range(len(pausvalue)):
+                if pygame.mouse.get_pressed()[0] and spriterectbuttons[e].collidepoint(pygame.mouse.get_pos()):
+                    pausvalue[e] = False
+                    if e == 2:
+                        pausvalue[1] = True
+            run = pausvalue[0]
+        if not pausvalue[1] and pausvalue[2]:
+            dec -= 1
+            decmove -= 1
+            timef += time.process_time() - timed
+        timed = time.process_time()
+
+        #
+        # Partie ajout des dechets naturellement generés
+        #
+        pygame.time.delay(10)
+        if dec <= 0:
+            dec = random.randint(150, 300)
+            for i in range(random.randint(1, 3)):
+                dechets.append([pygame.Rect(random.randint(10, 560), -110, 20, 20), random.randint(0, 3)])
+            # rajoute un/des dechets a la liste des materiaux
+
+        if decmove <= 0:
+            decmove = 1
+            for i in sablerect:
+                if i.y > 600:
+                    i.y = -600
+                i.y += 1
+            for i in dechets:
+                i[0] = i[0].move(0, 1)
+                if i[0].y > 600:
+                    dechets.remove(i)
+        #
+        # Partie test des touches préssées
+        #
+        keys = pygame.key.get_pressed()
+        # recuperation des touches pressées
+        if keys[pygame.K_q]:
+            # appuyer sur q termine le mini jeu
+            run = False
+        if keys[pygame.K_ESCAPE]:
+            #
+            # variable pour le menu de pause
+            #
+            pausvalue[1] = True
+            pausvalue[2] = True
+            pygame.time.delay(100)
+        for event in pygame.event.get():
+            # si on tente de quitter le jeu s'arette
+            if event.type == pygame.QUIT:
+                run = False
+        if keys[pygame.K_a]:
+            npoub = 0
+            # choisit la poubelle utilisée sur plastique
+        if keys[pygame.K_z]:
+            npoub = 1
+            # choisit la poubelle utilisée sur metal
+        if keys[pygame.K_e]:
+            npoub = 2
+            # choisit la poubelle utilisée sur papier
+        if keys[pygame.K_r]:
+            npoub = 3
+            # choisit la poubelle utilisée sur organique
+        if keys[pygame.K_LEFT]:
+            # appuyer sur la fleche gauche nous met vers les tapis de gauche
+            if x > 0:
+                x -= 2
+        if keys[pygame.K_RIGHT]:
+            # appuyer sur la fleche de droite nous met vers les tapis roulant de droite
+            if x < ecran.get_width() - 50:
+                x += 2
+        if keys[pygame.K_UP]:
+            # appuyer sur haut nous bouge vers le haut
+            if y > 0:
+                y -= 2
+        if keys[pygame.K_DOWN]:
+            # à l'inverse en appuyant sur la fleche du bas vas vers le bas
+            if y < ecran.get_height() - 50:
+                y += 2
+        if keys[pygame.K_n]:
+            for i in dechets:
+                if perso.colliderect(i[0]) and i[-1] == npoub:
+                    dechets.remove(i)
+                    score[1] += 1
+                    if score[1] >= 10:
+                        score[1] -= 10
+                        score[0] += 1
+    scoref = score[0] * 10 + score[1]
+    return scoref,timef>timen
+
+
+def jeumaison(niv2=0,final=False):
+    import pygame, random, time
+    global piece, jour, energie
+
+    #
+    # Partie reactualisation de l'ecran
+    #
+    def refresh():
+        global piece, jour, energie
+        ecran.fill((150, 150, 150))
+        ecran.blit(pygame.image.load("back.png"), pygame.image.load("back.png").get_rect())
+        ecran.blit(pieceobjetimg[piece][pieceobjet[piece]], pieceobjetrect[piece])
+        ecran.blit(piecelumiereimg[piecelumiere[piece]], piecelumiererect)
+        ecran.blit(piecevoletimg[piecevolet[piece] * (jour + 1)], piecevoletrect)
+        pygame.draw.rect(ecran, (150, 255, 150), [100, 550, energie // 25, 50])
+        if piecevolet[piece] * jour + piecelumiere[piece] == 0:
+            ecran.fill((0, 0, 0))
+        if pausvalue[1]:
+            ecran.fill((200, 200, 200))
+            for i in range(3):
+                ecran.blit(spritesbutton[i], spriterectbuttons[i])
+        #
+        # partie ecran des commandes
+        #
+        if not pausvalue[2]:
+            ecran.fill((255, 255, 255))
+            ecran.blit(commandscreen, commandscreen.get_rect())
+        pygame.display.update()
+
+    #
+    # Partie de l'initialisation des variables
+    #
+    pygame.init()
+    ecran = pygame.display.set_mode((600, 600))
+    pygame.display.set_caption("mini jeu maison")
+    ecran.fill((0, 0, 255))
+    run = True
+    pausvalue = [True for i in range(3)]
+    energie = 6000
+    x = 0
+    commandscreen = pygame.image.load("commandmaison.png")
+    jour = 0
+    decinter = 0
+    dec2 = 0
+    spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
+                     pygame.image.load("commandbutton.png")]
+    spriterect = [i.get_rect() for i in spritesbutton]
+    spriterectbuttons = [spriterect[i].move(((ecran.get_width() - spriterect[i].width) / 2 - 200 + 200 * i,
+                                             (ecran.get_height() - spriterect[i].height) / 2)) for i in range(3)]
+    piecevolet = [0 for i in range(5)]
+    pieceobjet = [0 for i in range(5)]
+    piecelumiere = [0 for i in range(5)]
+    objeti = [150, 150, 75, 100, 40]
+    piecevoletimg = [pygame.image.load("fenetre" + str(i) + ".png") for i in range(3)]
+    pieceobjetimg = [(pygame.image.load("objet" + str(i) + ".png"), pygame.image.load("objet" + str(i) + "1" + ".png"))
+                     for i in range(5)]
+    piecelumiereimg = [pygame.image.load("ampoule" + str(i) + ".png") for i in range(2)]
+    piecevoletrect = piecevoletimg[0].get_rect().move(100, 200)
+    pieceobjetrect = [pieceobjetimg[i][0].get_rect() for i in range(5)]
+    pieceobjetrect = [pieceobjetrect[i].move(
+        ((ecran.get_width() - pieceobjetrect[i].width) // 2,
+         (ecran.get_height() - pieceobjetrect[i].height - objeti[i]))) for i in
+        range(5)]
+    piecelumiererect = piecelumiereimg[0].get_rect().move(250, 0)
+    piece = 0
+    decrobinet = 15
+    decjour = 1500
+    declum = 0
+    timed = time.process_time()
+    timef = 0
+    while run:
+        if final:
+            if timef>=40:
+                run=False
+        if energie <= 0:
+            run = False
+        if pausvalue[1]:
+            for e in range(len(pausvalue)):
+                if pygame.mouse.get_pressed()[0] and spriterectbuttons[e].collidepoint(pygame.mouse.get_pos()):
+                    pausvalue[e] = False
+                    run = pausvalue[0]
+        elif pausvalue[2]:
+            decjour -= 1
+            dec2 -= 1
+            declum -= 1
+            decrobinet -= 1
+            for i in piecevolet:
+                energie -= abs(jour - 1) * i
+            for i in piecelumiere:
+                energie -= i
+            for i in pieceobjet:
+                energie -= i
+            timef += time.process_time() - timed
+        timed = time.process_time()
+        if decjour <= 0:
+            jour = abs(jour - 1)
+            decjour = 3000
+        pygame.time.delay(10)
+        #
+        # partie changement dans les pieces
+        #
+        if decrobinet < 0:
+            decrobinet = 200 - niv2 * 100
+            pieceobjet[random.randint(0, 4)] = 1
+        #
+        # partie test des touches pressées
+        #
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+        if keys[pygame.K_LEFT]:
+            if dec2 < 0:
+                piece -= 1
+                dec2 = 7
+                if piece < 0:
+                    piece = 4
+        if keys[pygame.K_RIGHT]:
+            if dec2 < 0:
+                piece += 1
+                dec2 = 7
+                if piece > 4:
+                    piece = 0
+        decinter -= 1
+        if keys[pygame.K_ESCAPE]:
+            pausvalue[1] = True
+            pausvalue[2] = True
+        if niv2 != 0:
+            if keys[pygame.K_UP]:
+                piecevolet[piece] = 1
+            if keys[pygame.K_DOWN]:
+                piecevolet[piece] = 0
+        if keys[pygame.K_n]:
+            if decinter < 0:
+                decinter = 7
+                pieceobjet[piece] = abs(pieceobjet[piece] - 1)
+        if keys[pygame.K_b]:
+            if declum < 0:
+                declum = 7
+                piecelumiere[piece] = abs(piecelumiere[piece] - 1)
+        refresh()
+    return timef, energie <= 0 or (timef>=40 and final),energie
+
+
+def ramasserplagemer(final=False):
+    import pygame
+    import random
+    import time
+    global yv, vague, vaguerect, npoub, commandscreen
+
+    #
+    # Partie fonction actualisation de l'ecran
+    #
+
+    def refresh(x, y):
+        """Fonction qui fait apparaitre le jeu des dechets à la plage"""
+        global yv, vague, vaguerect, npoub, commandscreen
+        #
+        # Partie animation principale
+        #
+        # decompte pour l'animation
+
+        #
+        # Partie remise à zero
+        #
+
+        yconv = [(i) * 100 + 50 for i in range(5)]
+        indiccouleur = [(255, 255, 0), (100, 100, 255), (255, 255, 255), (50, 50, 50), (255, 0, 0)]
+        # je refresh mon ecran pour pas que les anciennes images restent
+        ecran.fill((255, 255, 0))
+
+        #
+        #  Partie affichage des images
+        #
+        ecran.blit(vague, vaguerect)
+        # on place les convoyeurs de droite.
+        pygame.draw.rect(ecran, (0, 255, 0), (x, y, 50, 50))
+        # je met le carre de mon personage
+        for i in range(len(dechets)):
+            ecran.blit(imagedechets[dechets[i][2]], dechets[i][0])
+        for i in range(2):
+            ecran.blit(imagenombres[score[i]], imagenombres[score[i]].get_rect().move([250 + i * 50, -5]))
+        # on place les dechets
+        ecran.blit(pygame.transform.scale(imagedechets[npoub], [70, 70]),
+                   pygame.Rect(0, ecran.get_width() - 70, 70, 70))
+        # on place l'indicateur de la poubelle que l'on a prise
+
+        #
+        # Partie ecran de pause
+        #
+        if pausvalue[1]:
+            ecran.fill((200, 200, 200))
+            for i in range(3):
+                ecran.blit(spritesbutton[i], spriterectbuttons[i])
+        #
+        # partie ecran des commandes
+        #
+        if not pausvalue[2]:
+            ecran.fill((255, 255, 255))
+            ecran.blit(commandscreen, commandscreen.get_rect())
+        # j update mon ecran
+        pygame.display.update()
+
+    #
+    # Partie initialisation des variables
+    #
+    score = [0, 0]
+    pausvalue = [True, True, True]
+    ecran = pygame.display.set_mode((600, 600))
+    decani = 10
+    decaniaccele = 8
+    spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
+                     pygame.image.load("commandbutton.png")]
+    spriterect = [i.get_rect() for i in spritesbutton]
+    spriterectbuttons = [spriterect[i].move(((ecran.get_width() - spriterect[i].width) / 2 - 200 + 200 * i,
+                                             (ecran.get_height() - spriterect[i].height) / 2)) for i in range(3)]
+    nomdechets = ("plastique.png", "metal.png", "papier.png", "organique.png")
+    imagedechets = [pygame.image.load(i) for i in nomdechets]
+    nomnombres = ("0.png", "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png",)
+    imagenombres = [pygame.image.load(i) for i in nomnombres]
+    vague = pygame.image.load("vague.png")
+    commandscreen = pygame.image.load("ecrancommandmer.png")
+    vaguerect = vague.get_rect().move((0, -410))
+    # ici j importe les images des convoyeurs et des materiaux pour les afficher plus tard et leur positions
+    pygame.display.set_caption("nettoyage de plage")
+    # je met le nom
+    ecran.fill((200, 200, 200))
+    # je met la couleur de base de l ecran
+    run = True
+    tapis = 0
+    x = 250
+    dechets = []
+    npoub = 0
+    poubelles = [[], [], []]
+    f = 0
+    dec = 0
+    y = 250
+    decpaus = 0
+    timef = 0
+    timen=130
+    if final:
+        timen=40
+    # j'initie toutes mes variables
+
+    #
+    # Grande Partie boucle
+    #
+    timed = time.process_time()
+    while run:
+        if timef >= timen:
+            run = False
+        perso = pygame.Rect(x, y, 50, 50)
+        refresh(x, y)
+        #
+        # partie menu pause
+        #
+        if pausvalue[1]:
+            for e in range(len(pausvalue)):
+                if pygame.mouse.get_pressed()[0] and spriterectbuttons[e].collidepoint(pygame.mouse.get_pos()):
+                    pausvalue[e] = False
+                    if e == 2:
+                        pausvalue[1] = True
+            run = pausvalue[0]
+        if not pausvalue[1] and pausvalue[2]:
+            dec -= 1
+            timef += time.process_time() - timed
+        timed = time.process_time()
+        #
+        # Partie ajout des dechets naturellement generés
+        #
+        pygame.time.delay(10)
+        if dec <= 0:
+            dec = 600
+            for i in range(random.randint(4, 7)):
+                dechets.append(
+                    [pygame.Rect(random.randint(10, 560), -110, 20, 20), random.randint(10, 300),
+                     random.randint(0, 3)])
+            # rajoute des dechets a la liste des dechets
+
+        #
+        # Partie test des touches préssées
+        #
+        if dec > 475 and dec != decpaus:
+            vaguerect = vaguerect.move((0, 2))
+            for i in dechets:
+                if i[1] > i[0].y:
+                    i[0] = i[0].move(0, 2)
+            if vaguerect.y + 270 > y:
+                y += 1
+        elif dec > 325 and dec != decpaus:
+            vaguerect = vaguerect.move((0, 1))
+            for i in dechets:
+                if i[1] > i[0].y:
+                    i[0] = i[0].move(0, 1)
+            if vaguerect.y + 270 > y:
+                y += 1
+        elif dec > 125 and dec != decpaus:
+            vaguerect = vaguerect.move((0, -2))
+            if vaguerect.y + 270 > y and y > 0:
+                y -= 1
+        keys = pygame.key.get_pressed()
+        # recuperation des touches pressées
+        if keys[pygame.K_ESCAPE]:
+            #
+            # variable pour le menu de pause
+            #
+            pausvalue[1] = True
+            pausvalue[2] = True
+            pygame.time.delay(100)
+        for event in pygame.event.get():
+            # si on tente de quitter le jeu s'arette
+            if event.type == pygame.QUIT:
+                run = False
+        if keys[pygame.K_a]:
+            npoub = 0
+            # choisit la poubelle utilisée sur plastique
+        if keys[pygame.K_z]:
+            npoub = 1
+            # choisit la poubelle utilisée sur metal
+        if keys[pygame.K_e]:
+            npoub = 2
+            # choisit la poubelle utilisée sur papier
+        if keys[pygame.K_r]:
+            npoub = 3
+            # choisit la poubelle utilisée sur organique
+        if keys[pygame.K_LEFT]:
+            # appuyer sur la fleche gauche nous met vers les tapis de gauche
+            if x > 0:
+                x -= 2
+        if keys[pygame.K_RIGHT]:
+            # appuyer sur la fleche de droite nous met vers les tapis roulant de droite
+            if x < ecran.get_width() - 50:
+                x += 2
+        if keys[pygame.K_UP]:
+            # appuyer sur haut nous bouge vers le haut
+            if y > 0:
+                y -= 2
+        if keys[pygame.K_DOWN]:
+            # à l'inverse en appuyant sur la fleche du bas vas vers le bas
+            if y < ecran.get_height() - 50:
+                y += 2
+        if keys[pygame.K_n]:
+            for i in dechets:
+                if perso.colliderect(i[0]) and i[-1] == npoub:
+                    dechets.remove(i)
+                    score[1] += 1
+                    if score[1] >= 10:
+                        score[1] -= 10
+                        score[0] += 1
+        decpaus = dec
+    scoref = score[0] * 10 + score[1]
+    return scoref, timef >= timen
+
+
+def panneaux(final=False):
+    import pygame
+    import random, time
+    global decani, tapis, decaniaccele, gauche, score
+
+    #
+    # Partie fonction actualisation de l'ecran
+    #
+
+    def refresh(x, y):
+        """Fonction qui fait apparaitre le jeu des panneaux solaire et le fait fonctionner en partie"""
+        global decani, tapis, decaniaccele, gauche, score
+        #
+        # Partie animation principale
+        #
+        # decompte pour l'animation
+        if decani <= 0:
+            decani = 17
+            for i in range(len(mat)):
+                if mat[i][-2] <= 11:
+                    if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                        mat[i][-1] = mat[i][-1].move([10, 0])
+                        mat[i][-2] += 1
+            # Cette partie fait bouger chaque materiaux des tapis de gauche pouvant bouger
+            for i in range(len(mat2)):
+                mat2[i][-1] = mat2[i][-1].move([10, 0])
+                mat2[i][-2] += 1
+            # Cette partie fait bouger chaque materiaux des tapis de droite
+            for i in mat2:
+                if i[-2] > 15:
+                    if i[0] == i[1]:
+                        score[1] += 1
+                    mat2.remove(i)
+                    if score[1] >= 10:
+                        score[1] -= 10
+                        score[0] += 1
+            # Ici cette partie permet d'augmenter le score quand un materiau a bien été placé
+            for i in range(len(ani)):
+                ani[i] += 1
+                if ani[i] >= 3:
+                    ani[i] = 0
+                    # on anime les tapis roulants et fait bouger les materiaux le long de celui ci
+        # ani est un nombre pour savoir quelle image mettre pour animer les objets, decani le decompte avant le changement d 'animation
+
+        #
+        # Partie animation d'acceleration secondaire
+        #
+
+        if keys[pygame.K_SPACE]:
+            decaniaccele -= 1
+        if decaniaccele <= 0:
+            decaniaccele = 8
+            ani[tapis] += 1
+            for i in range(len(mat)):
+                if mat[i][0] == tapis:
+                    if mat[i][-2] <= 11:
+                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                            mat[i][-1] = mat[i][-1].move([10, 0])
+                            mat[i][-2] += 1
+            for i in range(len(mat2)):
+                if mat2[i][0] == tapis:
+                    if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
+                        mat2[i][-1] = mat2[i][-1].move([10, 0])
+                        mat2[i][-2] += 1
+            if random.randint(0, 26) == 25:
+                if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                    mat.append([tapis, random.randint(0, 4), 0])
+                    mat[-1].append(
+                        imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
+                    if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                        del mat[-1]
+                # on crée des materiaux suplementaire aleatoirement quand on accelere le tapis
+            if ani[tapis] >= 3:
+                ani[tapis] = 0
+        # ici c'est un moyen d'acceler le tapis roulant en étant devant et appuyant sur espace ce qui fait apparaitre plus de materiaux
+
+        #
+        # Partie remise à zero
+        #
+
+        yconv = [(i) * 100 + 50 for i in range(5)]
+        indiccouleur = [(255, 255, 0), (100, 100, 255), (255, 255, 255), (50, 50, 50), (255, 0, 0)]
+        # je refresh mon ecran pour pas que les anciennes images restent
+        ecran.fill((200, 200, 200))
+
+        #
+        #  Partie affichage des images
+        #
+
+        for i in range(5):
+            pygame.draw.rect(ecran, indiccouleur[i], (450 - 12, yconv[i] - 12, 74, 74))
+            # on place les indication de couleur pour savoir ou deposer les materiaux
+        for i in range(5):
+            ecran.blit(convs[ani[i]], convsrectg[i])
+            # on place les convoyeurs de gauches
+        for i in range(5):
+            ecran.blit(convs[ani[i] + 3], convsrectd[i])
+            # on place les convoyeurs de droite.
+        for i in mat:
+            ecran.blit(imagemats[i[1]], i[-1])
+        for i in mat2:
+            ecran.blit(imagemats[i[1]], i[-1])
+        for i in range(2):
+            ecran.blit(imagenombres[score[i]], imagenombres[score[i]].get_rect().move([250 + i * 50, -5]))
+        # on place les materiaux
+        # je met le carre de mon personage
+        pygame.draw.rect(ecran, (0, 255, 0), (x, y, 50, 50))
+
+        #
+        # Partie ecran de pause
+        #
+        if pausvalue[1]:
+            ecran.fill((200, 200, 200))
+            for i in range(3):
+                ecran.blit(spritesbutton[i], spriterectbuttons[i])
+        if not pausvalue[2]:
+            ecran.fill((255, 255, 255))
+            ecran.blit(commandscreen, commandscreen.get_rect())
+            # j update mon ecran
+            pygame.display.update()
+        # j update mon ecran
+        pygame.display.update()
+
+    #
+    # Partie fonction de verification
+    #
+
+    def verif(dist, ligne, liste, tpp):
+        for i in tpp:
+            if i[0] == ligne:
+                if dist > (i[-2] - 3) and dist < i[-2] and not i == liste:
+                    return False
+        return True
+
+    #
+    # Partie initialisation des variables
+    #
+    score = [0, 0]
+    ani = [0, 0, 0, 0, 0]
+    pausvalue = [True, True, True]
+    ecran = pygame.display.set_mode((600, 600))
+    decani = 10
+    decaniaccele = 8
+    commandscreen=pygame.image.load("eecrancommandpanneau.png")
+    spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
+                     pygame.image.load("commandbutton.png")]
+    spriterect = [i.get_rect() for i in spritesbutton]
+    spriterectbuttons = [spriterect[i].move(((ecran.get_width() - spriterect[i].width) / 2 - 200 + 200 * i,
+                                             (ecran.get_height() - spriterect[i].height) / 2)) for i in range(3)]
+    nommat = ("prod1.png", "prod2.png", "prod3.png", "prod4.png", "prod5.png")
+    imagemats = [pygame.image.load(i) for i in nommat]
+    nomconvs = ("conv1.png", "conv2.png", "conv3.png", "conv4.png", "conv5.png", "conv6.png")
+    convs = [pygame.image.load(i) for i in nomconvs]
+    nomnombres = ("0.png", "1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png",)
+    imagenombres = [pygame.image.load(i) for i in nomnombres]
+    convsrectg = [convs[0].get_rect().move([0, 50 + i * 100]) for i in range(5)]
+    convsrectd = [convs[0].get_rect().move([450, 50 + i * 100]) for i in range(5)]
+    # ici j importe les images des convoyeurs et des materiaux pour les afficher plus tard et leur positions
+    pygame.display.set_caption("Panneaux solaires")
+    # je met le nom
+    ecran.fill((200, 200, 200))
+    # je met la couleur de base de l ecran
+    run = True
+    gauche = 150
+    droite = 400
+    tapis = 0
+    keys = pygame.key.get_pressed()
+    x = gauche
+    mat = []
+    f = 0
+    dec = 0
+    y = tapis * 100 + 50
+    main = 0
+    mat2 = []
+    # j'initie toutes mes variables
+
+    #
+    # Grande Partie boucle
+    #
+    timef=0
+    timen=130
+    if final:
+        timen=40
+    timed = time.process_time()
+    while run:
+        if timef >= timen:
+            run = False
+        refresh(x, y)
+        #
+        # partie menu pause
+        #
+        if pausvalue[1]:
+            for e in range(len(pausvalue)):
+                if pygame.mouse.get_pressed()[0] and spriterectbuttons[e].collidepoint(pygame.mouse.get_pos()):
+                    pausvalue[e] = False
+                    run = pausvalue[0]
+        elif pausvalue[2]:
+            #
+            # Partie ajout des materiaux naturellement generés
+            #
+            timef += time.process_time() - timed
+            f -= 1
+            dec -= 1
+            decani -= 1
+        timed=time.process_time()
+        # decompte du nommbre de frames avant de pouvoir rebouger de haut en bas et celui pour faire apparaitre des materiaux
+        pygame.time.delay(10)
+        if dec <= 0:
+            dec = 150
+            mat.append([random.randint(0, 4), random.randint(0, 4), 0])
+            mat[-1].append(imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
+            if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                del mat[-1]
+            # rajoute un materiau a la liste des materiaux
+
+        #
+        # Partie test des touches préssées
+        #
+
+        keys = pygame.key.get_pressed()
+        # recuperation des touches pressées
+        if keys[pygame.K_ESCAPE]:
+            #
+            # variable pour le menu de pause
+            #
+            pausvalue[1] = True
+            pausvalue[2] = True
+            pygame.time.delay(100)
+        for event in pygame.event.get():
+            # si on tente de quitter le jeu s'arette
+            if event.type == pygame.QUIT:
+                run = False
+        if keys[pygame.K_LEFT]:
+            # appuyer sur la fleche gauche nous met vers les tapis de gauche
+            if x != gauche:
+                if main != 0:
+                    main[-1] = main[-1].move([(gauche - droite), 0])
+            x = gauche
+        if keys[pygame.K_RIGHT]:
+            # appuyer sur la fleche de droite nous met vers les tapis roulant de droite
+            if x != droite:
+                if main != 0:
+                    main[-1] = main[-1].move([(droite - gauche), 0])
+            x = droite
+        if keys[pygame.K_UP]:
+            # appuyer sur haut nous remonte d'un tapis roulant
+            if f < 0:
+                if tapis > 0:
+                    tapis -= 1
+                    f = 15
+                    if main != 0:
+                        main[-1] = main[-1].move([0, -100])
+                    # f est un cooldown sinon on monte de plusieurs tapis instantanément
+            y = tapis * 100 + 50
+        if keys[pygame.K_DOWN]:
+            # à l'inverse en appuyant sur la fleche du bas on descend d'un tapis
+            if f < 0:
+                if tapis < 4:
+                    tapis += 1
+                    f = 15
+                    if main != 0:
+                        main[-1] = main[-1].move([0, 100])
+            y = tapis * 100 + 50
+        if keys[pygame.K_n]:
+            if x == gauche:
+                if main == 0:
+                    for i in mat:
+                        if i[0] == tapis:
+                            if i[-2] >= 11:
+                                main = i
+                                mat.remove(main)
+            if x == droite:
+                if main != 0:
+                    main[-1] = main[-1].move([85, 0])
+                    main[-2] = 0
+                    main[0] = tapis
+                    mat2.append(main)
+                    if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
+                        del mat2[-1]
+                    else:
+                        main = 0
+        # la fonction pour refresh l'ecran
+    scoref = score[0] * 10 + score[1]
+    return scoref, timef >= timen
+
+
+def affichmid(nom, entree=True):
+    import pygame
+    pygame.init()
+    img = pygame.image.load(nom)
+    rect = img.get_rect()
+    rect = rect.move((ecran.get_width() - rect.width) // 2, (ecran.get_height() - rect.height) // 2)
+    ecran.blit(img, rect)
+    if entree:
+        enter = pygame.image.load("enter.png")
+        ecran.blit(enter, enter.get_rect().move(ecran.get_width() - 40, ecran.get_height() - 60))
+
+
+def pausaffiche(nom):
+    ecran.fill((200, 200, 200))
+    affichmid(nom)
+    pygame.init()
+    keys = pygame.key.get_pressed()
+    while not keys[pygame.K_RETURN]:
+        pygame.display.update()
+        keys = pygame.key.get_pressed()
+        pygame.time.delay(100)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+
+pygame.init()
+ecran = pygame.display.set_mode((600, 600))
+pygame.display.set_caption("Save the planet")
+ecran.fill((200, 200, 200))
+run = True
+pygame.time.delay(300)
+pausaffiche("enveloppe.png")
+pygame.time.delay(300)
+keys = pygame.key.get_pressed()
+pausaffiche("lettre.png")
+pausaffiche("barrea.png")
+niv = 1
+nivmax = 1
+nivmaxscore = [0 for i in range(7)]
+nivscorem = [60, 40, 100, 60, 35, 80, 70]
+decniv = 0
+scoret = 10
+while run:
+    decniv -= 1
+    ecran.fill((150, 150, 255))
+    affichmid("rond.png", False)
+    affichmid(str(niv) + ".png")
+    pygame.draw.rect(ecran, (0,0,0), [100, 20, 400, 50])
+    pygame.draw.rect(ecran, (150, 255, 150), [100, 20, scoret * 4, 50])
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        if decniv < 0:
+            if niv > 1:
+                decniv = 20
+                niv -= 1
+    if keys[pygame.K_RIGHT]:
+        if decniv < 0:
+            if niv < nivmax:
+                niv += 1
+                decniv = 20
+    if keys[pygame.K_RETURN]:
+        if niv == 1:
+            score, fini = ramasserplagemer()
+        if niv == 2:
+            score, fini = tridechets()
+        if niv == 3:
+            score, fini,a = jeumaison()
+        if niv == 4:
+            score, fini = panneaux()
+        if niv == 5:
+            score, fini = ramasserplagemarche()
+        if niv == 6:
+            score, fini ,a= jeumaison(1)
+        if niv == 7:
+            score, fini = jeufinal()
+        if fini:
+            nivmaxscore[niv - 1] = max([nivmaxscore[niv - 1], min(score / nivscorem[niv - 1], 1)])
+            if (int(min(score / nivscorem[niv - 1], 1) * 3)) != 0:
+                pausaffiche(str(int(min(score / nivscorem[niv - 1], 1) // 0.33)) + "e.png")
+                nivmax = min(max(nivmax, niv + 1),7)
+            else:
+                pausaffiche("fail.png")
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+    scoret = sum(nivmaxscore) * 100 // 7
+    pygame.display.update()
+pygame.quit()
