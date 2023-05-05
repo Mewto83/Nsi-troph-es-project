@@ -1,16 +1,18 @@
 import pygame
 
+
 def jeufinal():
-    score1,continu=ramasserplagemer(True)
+    score1, continu = ramasserplagemer(True)
     if continu:
         score2, continu = panneaux(True)
         if continu:
-            a, continu,score3 = jeumaison(1,True)
+            a, continu, score3 = jeumaison(1, True)
             if continu:
                 score4, continu = ramasserplagemarche(True)
                 if continu:
-                    return score1+score2+int(score3/200)+score4,True
-    return 0,False
+                    return score1 + score2 + int(score3 / 200) + score4, True
+    return 0, False
+
 
 def tridechets():
     import pygame
@@ -32,9 +34,10 @@ def tridechets():
             decani = 17
             for i in range(len(mat)):
                 if mat[i][-2] <= 11:
-                    if verif(mat[i][-2], mat[i][0], mat[i], mat):
-                        mat[i][-1] = mat[i][-1].move([10, 0])
-                        mat[i][-2] += 1
+                    if len(mat) != 0:
+                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                            mat[i][-1] = mat[i][-1].move([10, 0])
+                            mat[i][-2] += 1
             # Cette partie fait bouger chaque materiaux des tapis de gauche pouvant bouger
             for i in range(len(mat2)):
                 mat2[i][-1] = mat2[i][-1].move([10, 0])
@@ -68,21 +71,24 @@ def tridechets():
             for i in range(len(mat)):
                 if mat[i][0] == tapis:
                     if mat[i][-2] <= 11:
-                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
-                            mat[i][-1] = mat[i][-1].move([10, 0])
-                            mat[i][-2] += 1
+                        if len(mat) != 0:
+                            if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                                mat[i][-1] = mat[i][-1].move([10, 0])
+                                mat[i][-2] += 1
             for i in range(len(mat2)):
                 if mat2[i][0] == tapis:
-                    if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
-                        mat2[i][-1] = mat2[i][-1].move([10, 0])
-                        mat2[i][-2] += 1
+                    if len(mat2) != 0:
+                        if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
+                            mat2[i][-1] = mat2[i][-1].move([10, 0])
+                            mat2[i][-2] += 1
             if random.randint(0, 26) == 25:
-                if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                    mat.append([tapis, random.randint(0, 2), 0])
-                    mat[-1].append(
-                        imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
-                    if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                        del mat[-1]
+                if len(mat) != 0:
+                    if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                        mat.append([tapis, random.randint(0, 2), 0])
+                        mat[-1].append(
+                            imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 155]).move([0, mat[-1][0]]))
+                        if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                            del mat[-1]
                 # on crée des materiaux suplementaire aleatoirement quand on accelere le tapis
             if ani[tapis] >= 3:
                 ani[tapis] = 0
@@ -92,7 +98,7 @@ def tridechets():
         # Partie remise à zero
         #
 
-        yconv = [(i) * 100 + 50 for i in range(5)]
+        yconv = [(i) * 100 + 150 for i in range(3)]
         indiccouleur = [(150, 150, 150), (255, 255, 150), (255, 100, 100)]
         # je refresh mon ecran pour pas que les anciennes images restent
         ecran.fill((200, 200, 200))
@@ -102,7 +108,7 @@ def tridechets():
         #
 
         for i in range(3):
-            pygame.draw.rect(ecran, indiccouleur[i], (450 - 12, yconv[i] - 12 + 100, 74, 74))
+            pygame.draw.rect(ecran, indiccouleur[i], (450 - 12, yconv[i] - 12, 74, 74))
             # on place les indication de couleur pour savoir ou deposer les materiaux
         for i in range(3):
             ecran.blit(convs[ani[i]], convsrectg[i])
@@ -191,7 +197,7 @@ def tridechets():
     #
     # Grande Partie boucle
     #
-    timef=0
+    timef = 0
     timed = time.process_time()
     while run:
         if timef >= 130:
@@ -213,15 +219,16 @@ def tridechets():
             dec -= 1
             decani -= 1
             timef += time.process_time() - timed
-        timed=time.process_time()
+        timed = time.process_time()
         # decompte du nommbre de frames avant de pouvoir rebouger de haut en bas et celui pour faire apparaitre des materiaux
         pygame.time.delay(10)
         if dec <= 0:
             dec = 150
             mat.append([random.randint(0, 2), random.randint(0, 2), 0])
             mat[-1].append(imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 155]).move([0, mat[-1][0]]))
-            if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                del mat[-1]
+            if len(mat) != 0:
+                if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                    del mat[-1]
             # rajoute un materiau a la liste des materiaux
 
         #
@@ -286,10 +293,11 @@ def tridechets():
                     main[-2] = 0
                     main[0] = tapis
                     mat2.append(main)
-                    if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
-                        del mat2[-1]
-                    else:
-                        main = 0
+                    if len(mat2) != 0:
+                        if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
+                            del mat2[-1]
+                        else:
+                            main = 0
         # la fonction pour refresh l'ecran
     scoref = score[0] * 10 + score[1]
     return scoref, timef >= 130
@@ -395,9 +403,9 @@ def ramasserplagemarche(final=False):
     decpaus = 0
     decmove = 1
     timef = 0
-    timen=100
+    timen = 100
     if final:
-        timen=40
+        timen = 40
     # j'initie toutes mes variables
 
     #
@@ -501,10 +509,10 @@ def ramasserplagemarche(final=False):
                         score[1] -= 10
                         score[0] += 1
     scoref = score[0] * 10 + score[1]
-    return scoref,timef>timen
+    return scoref, timef > timen
 
 
-def jeumaison(niv2=0,final=False):
+def jeumaison(niv2=0, final=False):
     import pygame, random, time
     global piece, jour, energie
 
@@ -576,8 +584,8 @@ def jeumaison(niv2=0,final=False):
     timef = 0
     while run:
         if final:
-            if timef>=40:
-                run=False
+            if timef >= 40:
+                run = False
         if energie <= 0:
             run = False
         if pausvalue[1]:
@@ -645,7 +653,7 @@ def jeumaison(niv2=0,final=False):
                 declum = 7
                 piecelumiere[piece] = abs(piecelumiere[piece] - 1)
         refresh()
-    return timef, energie <= 0 or (timef>=40 and final),energie
+    return timef, energie <= 0 or (timef >= 40 and final), energie
 
 
 def ramasserplagemer(final=False):
@@ -743,9 +751,9 @@ def ramasserplagemer(final=False):
     y = 250
     decpaus = 0
     timef = 0
-    timen=130
+    timen = 130
     if final:
-        timen=40
+        timen = 40
     # j'initie toutes mes variables
 
     #
@@ -878,9 +886,10 @@ def panneaux(final=False):
             decani = 17
             for i in range(len(mat)):
                 if mat[i][-2] <= 11:
-                    if verif(mat[i][-2], mat[i][0], mat[i], mat):
-                        mat[i][-1] = mat[i][-1].move([10, 0])
-                        mat[i][-2] += 1
+                    if len(mat) != 0:
+                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                            mat[i][-1] = mat[i][-1].move([10, 0])
+                            mat[i][-2] += 1
             # Cette partie fait bouger chaque materiaux des tapis de gauche pouvant bouger
             for i in range(len(mat2)):
                 mat2[i][-1] = mat2[i][-1].move([10, 0])
@@ -914,21 +923,24 @@ def panneaux(final=False):
             for i in range(len(mat)):
                 if mat[i][0] == tapis:
                     if mat[i][-2] <= 11:
-                        if verif(mat[i][-2], mat[i][0], mat[i], mat):
-                            mat[i][-1] = mat[i][-1].move([10, 0])
-                            mat[i][-2] += 1
+                        if len(mat) != 0:
+                            if verif(mat[i][-2], mat[i][0], mat[i], mat):
+                                mat[i][-1] = mat[i][-1].move([10, 0])
+                                mat[i][-2] += 1
             for i in range(len(mat2)):
                 if mat2[i][0] == tapis:
-                    if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
-                        mat2[i][-1] = mat2[i][-1].move([10, 0])
-                        mat2[i][-2] += 1
+                    if len(mat2) != 0:
+                        if verif(mat2[i][-2], mat2[i][0], mat2[i], mat2):
+                            mat2[i][-1] = mat2[i][-1].move([10, 0])
+                            mat2[i][-2] += 1
             if random.randint(0, 26) == 25:
-                if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                    mat.append([tapis, random.randint(0, 4), 0])
-                    mat[-1].append(
-                        imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
-                    if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                        del mat[-1]
+                if len(mat) != 0:
+                    if verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                        mat.append([tapis, random.randint(0, 4), 0])
+                        mat[-1].append(
+                            imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
+                        if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                            del mat[-1]
                 # on crée des materiaux suplementaire aleatoirement quand on accelere le tapis
             if ani[tapis] >= 3:
                 ani[tapis] = 0
@@ -965,7 +977,6 @@ def panneaux(final=False):
         # on place les materiaux
         # je met le carre de mon personage
         pygame.draw.rect(ecran, (0, 255, 0), (x, y, 50, 50))
-
         #
         # Partie ecran de pause
         #
@@ -1001,7 +1012,7 @@ def panneaux(final=False):
     ecran = pygame.display.set_mode((600, 600))
     decani = 10
     decaniaccele = 8
-    commandscreen=pygame.image.load("eecrancommandpanneau.png")
+    commandscreen = pygame.image.load("eecrancommandpanneau.png")
     spritesbutton = [pygame.image.load("closebutton.png"), pygame.image.load("pausebutton.png"),
                      pygame.image.load("commandbutton.png")]
     spriterect = [i.get_rect() for i in spritesbutton]
@@ -1037,10 +1048,10 @@ def panneaux(final=False):
     #
     # Grande Partie boucle
     #
-    timef=0
-    timen=130
+    timef = 0
+    timen = 130
     if final:
-        timen=40
+        timen = 40
     timed = time.process_time()
     while run:
         if timef >= timen:
@@ -1062,15 +1073,16 @@ def panneaux(final=False):
             f -= 1
             dec -= 1
             decani -= 1
-        timed=time.process_time()
+        timed = time.process_time()
         # decompte du nommbre de frames avant de pouvoir rebouger de haut en bas et celui pour faire apparaitre des materiaux
         pygame.time.delay(10)
         if dec <= 0:
             dec = 150
             mat.append([random.randint(0, 4), random.randint(0, 4), 0])
             mat[-1].append(imagemats[mat[-1][1]].get_rect().move([0, 100 * mat[-1][0] + 55]).move([0, mat[-1][0]]))
-            if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
-                del mat[-1]
+            if len(mat) != 0:
+                if not verif(mat[-1][-2], mat[-1][0], mat[-1], mat):
+                    del mat[-1]
             # rajoute un materiau a la liste des materiaux
 
         #
@@ -1135,10 +1147,11 @@ def panneaux(final=False):
                     main[-2] = 0
                     main[0] = tapis
                     mat2.append(main)
-                    if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
-                        del mat2[-1]
-                    else:
-                        main = 0
+                    if len(mat2) != 0:
+                        if not verif(mat2[-1][-2], mat2[-1][0], mat2[-1], mat2):
+                            del mat2[-1]
+                        else:
+                            main = 0
         # la fonction pour refresh l'ecran
     scoref = score[0] * 10 + score[1]
     return scoref, timef >= timen
@@ -1192,7 +1205,7 @@ while run:
     ecran.fill((150, 150, 255))
     affichmid("rond.png", False)
     affichmid(str(niv) + ".png")
-    pygame.draw.rect(ecran, (0,0,0), [100, 20, 400, 50])
+    pygame.draw.rect(ecran, (0, 0, 0), [100, 20, 400, 50])
     pygame.draw.rect(ecran, (150, 255, 150), [100, 20, scoret * 4, 50])
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
@@ -1211,20 +1224,20 @@ while run:
         if niv == 2:
             score, fini = tridechets()
         if niv == 3:
-            score, fini,a = jeumaison()
+            score, fini, a = jeumaison()
         if niv == 4:
             score, fini = panneaux()
         if niv == 5:
             score, fini = ramasserplagemarche()
         if niv == 6:
-            score, fini ,a= jeumaison(1)
+            score, fini, a = jeumaison(1)
         if niv == 7:
             score, fini = jeufinal()
         if fini:
             nivmaxscore[niv - 1] = max([nivmaxscore[niv - 1], min(score / nivscorem[niv - 1], 1)])
             if (int(min(score / nivscorem[niv - 1], 1) * 3)) != 0:
                 pausaffiche(str(int(min(score / nivscorem[niv - 1], 1) // 0.33)) + "e.png")
-                nivmax = min(max(nivmax, niv + 1),7)
+                nivmax = min(max(nivmax, niv + 1), 7)
             else:
                 pausaffiche("fail.png")
     for event in pygame.event.get():
